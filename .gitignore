@@ -1,4 +1,5 @@
 config.yaml
+builds/
 __pycache__/
 *.py[cod]
 *$py.class
