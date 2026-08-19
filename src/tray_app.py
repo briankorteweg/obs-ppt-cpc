@@ -4,21 +4,11 @@ import logging
 import threading
 
 import pystray
-from PIL import Image, ImageDraw
 
 from .bridge import BridgeApp
+from .icons import get_tray_icon
 
 logger = logging.getLogger(__name__)
-
-
-def _create_icon(connected: bool, active: bool) -> Image.Image:
-    color = (46, 160, 67) if connected and active else (46, 125, 217) if connected else (180, 60, 60)
-    image = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(image)
-    draw.ellipse((8, 8, 56, 56), fill=color)
-    draw.rectangle((24, 20, 40, 44), fill="white")
-    draw.rectangle((28, 24, 36, 32), fill=color)
-    return image
 
 
 class TrayApp:
@@ -45,7 +35,7 @@ class TrayApp:
 
         self._icon = pystray.Icon(
             "obs-ppt-cpc",
-            _create_icon(False, False),
+            get_tray_icon(False),
             "OBS PPT CPC",
             menu,
         )
@@ -62,7 +52,7 @@ class TrayApp:
     def _on_state_change(self, state) -> None:
         if self._icon is None:
             return
-        self._icon.icon = _create_icon(state.obs_connected, state.slideshow_active)
+        self._icon.icon = get_tray_icon(state.obs_connected)
         title = state.status_message
         if state.slideshow_active:
             title = f"[Live] {title}"
