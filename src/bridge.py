@@ -92,16 +92,15 @@ class BridgeApp:
             self._runtime_default_scene = default_scene
             logger.info("Default scene set to %r from slide %s", default_scene, slide_number)
 
-        target_scene = scene_name or self._runtime_default_scene
-        if not target_scene:
-            logger.warning("Slide %s has no OBS tag and no default scene", slide_number)
-            self._set_status(
-                f"Slide {slide_number}: no scene mapped",
-                slideshow_active=True,
+        if not scene_name:
+            logger.debug(
+                "Slide %s has no OBS tag; keeping scene %r",
+                slide_number,
+                self.state.last_scene,
             )
             return
 
-        self._switch_scene(target_scene, slide_number=slide_number)
+        self._switch_scene(scene_name, slide_number=slide_number)
 
     def _switch_scene(self, scene_name: str, slide_number: int | None = None) -> None:
         try:
