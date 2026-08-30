@@ -5,7 +5,7 @@ import threading
 from dataclasses import dataclass, field
 
 from .config import AppConfig
-from .notes_parser import parse_notes
+from .notes_parser import parse_scene
 from .obs_client import OBSClient
 from .ppt_listener import PPTListener
 
@@ -24,7 +24,6 @@ class BridgeApp:
     def __init__(self, config: AppConfig) -> None:
         self.config = config
         self.state = AppState()
-        self._runtime_default_scene = config.default_scene
         self._obs = OBSClient(
             host=config.obs.host,
             port=config.obs.port,
@@ -86,22 +85,16 @@ class BridgeApp:
             self._switch_scene(scene_name)
 
     def _on_slide_change(self, slide_number: int, notes: str) -> None:
-        scene_name, default_scene = parse_notes(notes)
-
-        if default_scene:
-            self._runtime_default_scene = default_scene
-            logger.info("Default scene set to %r from slide %s", default_scene, slide_number)
-
-        target_scene = scene_name or self._runtime_default_scene
-        if not target_scene:
-            logger.warning("Slide %s has no OBS tag and no default scene", slide_number)
+        scene_name = parse_scene(notes)
+        if not scene_name:
+            logger.warning("Slide %s has no OBS: tag in speaker notes", slide_number)
             self._set_status(
-                f"Slide {slide_number}: no scene mapped",
+                f"Slide {slide_number}: missing OBS: tag",
                 slideshow_active=True,
             )
             return
 
-        self._switch_scene(target_scene, slide_number=slide_number)
+        self._switch_scene(scene_name, slide_number=slide_number)
 
     def _switch_scene(self, scene_name: str, slide_number: int | None = None) -> None:
         try:
