@@ -20,7 +20,6 @@ class OBSConfig:
 @dataclass
 class AppConfig:
     obs: OBSConfig
-    default_scene: str
     poll_interval: float
 
 
@@ -43,6 +42,5 @@ def load_config(path: Path | None = None) -> AppConfig:
             port=int(obs_raw.get("port", 4455)),
             password=str(obs_raw.get("password", "")),
         ),
-        default_scene=str(raw.get("default_scene", "Wide Shot")),
         poll_interval=float(raw.get("poll_interval", 0.05)),
     )

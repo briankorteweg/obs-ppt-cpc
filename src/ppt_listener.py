@@ -29,7 +29,6 @@ class PPTListener:
         self._thread: threading.Thread | None = None
         self._last_slide: int | None = None
         self._slideshow_active = False
-        self._slide_notes_cache: dict[int, str] = {}
         self._app = None
 
     def start(self) -> None:
@@ -55,7 +54,6 @@ class PPTListener:
         self._app = None
         self._last_slide = None
         self._slideshow_active = False
-        self._slide_notes_cache = {}
         logger.info("PowerPoint listener stopped")
 
     @property
@@ -138,11 +136,13 @@ class PPTListener:
             return
 
         if not self._slideshow_active:
-            self._build_slide_cache(app)
+            entering_slideshow = True
+        else:
+            entering_slideshow = False
 
         self._slideshow_active = True
 
-        if current_slide == self._last_slide:
+        if not entering_slideshow and current_slide == self._last_slide:
             return
 
         self._last_slide = current_slide
@@ -156,37 +156,15 @@ class PPTListener:
             logger.exception("Slide-change callback failed")
 
     def _notes_for_slide(self, view, current_slide: int) -> str:
-        if current_slide in self._slide_notes_cache:
-            return self._slide_notes_cache[current_slide]
-
         notes = _read_view_slide_notes(view)
         if notes is not None:
-            self._slide_notes_cache[current_slide] = notes
             return notes
 
         try:
-            notes = _read_slide_notes(self._app.ActivePresentation.Slides.Item(current_slide))
+            return _read_slide_notes(self._app.ActivePresentation.Slides.Item(current_slide))
         except (AttributeError, pythoncom.com_error) as exc:
             logger.debug("Could not read notes for slide %s: %s", current_slide, exc)
-            notes = ""
-
-        self._slide_notes_cache[current_slide] = notes
-        return notes
-
-    def _build_slide_cache(self, app) -> None:
-        try:
-            presentation = app.ActivePresentation
-            cache: dict[int, str] = {}
-
-            for index in range(1, presentation.Slides.Count + 1):
-                cache[index] = _read_slide_notes(presentation.Slides.Item(index))
-
-            self._slide_notes_cache = cache
-            logger.info("Cached speaker notes for %s slides", len(cache))
-
-        except (AttributeError, pythoncom.com_error) as exc:
-            logger.warning("Could not cache slide notes: %s", exc)
-            self._slide_notes_cache = {}
+            return ""
 
     def _handle_no_slideshow(self) -> None:
         if self._slideshow_active or self._last_slide is not None:
@@ -194,7 +172,6 @@ class PPTListener:
 
         self._slideshow_active = False
         self._last_slide = None
-        self._slide_notes_cache = {}
 
 
 def _current_slide_index(view) -> int:

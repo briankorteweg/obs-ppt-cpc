@@ -3,7 +3,5 @@ obs:
   port: 4455
   password: ""  # set in your local config.yaml (not committed to git)
 
-default_scene: "Wide Shot"
-
 # How often to check PowerPoint for slide changes during a slideshow (seconds)
 poll_interval: 0.05
