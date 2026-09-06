@@ -1,6 +1,6 @@
 $projectDir = $PSScriptRoot
 $desktop = [Environment]::GetFolderPath("Desktop")
-$shortcutPath = Join-Path $desktop "OBS PPT CPC.lnk"
+$shortcutPath = Join-Path $desktop "SceneSlider.lnk"
 $launcherPath = Join-Path $projectDir "launch.vbs"
 $iconPath = Join-Path $projectDir "assets\app.ico"
 
@@ -10,7 +10,7 @@ $shortcut.TargetPath = "wscript.exe"
 $shortcut.Arguments = "`"$launcherPath`""
 $shortcut.WorkingDirectory = $projectDir
 $shortcut.WindowStyle = 7
-$shortcut.Description = "Switch OBS scenes from PowerPoint speaker notes"
+$shortcut.Description = "SceneSlider — switch OBS scenes from PowerPoint speaker notes"
 if (Test-Path $iconPath) {
     $shortcut.IconLocation = "$iconPath,0"
 }

@@ -1,4 +1,4 @@
-' Launches OBS PPT CPC without a console window.
+' Launches SceneSlider without a console window.
 Set fso = CreateObject("Scripting.FileSystemObject")
 Set shell = CreateObject("WScript.Shell")
 

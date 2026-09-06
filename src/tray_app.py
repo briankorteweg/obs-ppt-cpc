@@ -34,9 +34,9 @@ class TrayApp:
         )
 
         self._icon = pystray.Icon(
-            "obs-ppt-cpc",
+            "sceneslider",
             get_tray_icon(False),
-            "OBS PPT CPC",
+            "SceneSlider",
             menu,
         )
 
