@@ -15,6 +15,8 @@ WARNING_FILL_SVG = (ASSETS_DIR / "warning-fill.svg").read_text(encoding="utf-8")
 CONNECTED_COLOR = "#22c55e"
 WARNING_COLOR = "#eab308"
 TRAY_ICON_SIZE = 64
+APP_ICON_PATH = ASSETS_DIR.parent / "app.ico"
+APP_ICON_SIZES = (16, 32, 48, 64, 128, 256)
 
 
 def _render_svg_icon(svg_template: str, color: str, size: int) -> Image.Image:
@@ -39,3 +41,20 @@ def get_tray_icon(connected: bool, size: int = TRAY_ICON_SIZE) -> Image.Image:
     if connected:
         return _render_svg_icon(PLAY_CIRCLE_FILL_SVG, CONNECTED_COLOR, size)
     return _render_svg_icon(WARNING_FILL_SVG, WARNING_COLOR, size)
+
+
+def get_app_icon(size: int = 256) -> Image.Image:
+    """Return the connected tray icon for use as the application icon."""
+    return get_tray_icon(True, size=size)
+
+
+def write_app_icon(path: Path | None = None) -> Path:
+    """Write a multi-size Windows .ico using the connected icon."""
+    target = path or APP_ICON_PATH
+    image = get_app_icon(size=max(APP_ICON_SIZES))
+    image.save(
+        target,
+        format="ICO",
+        sizes=[(size, size) for size in APP_ICON_SIZES],
+    )
+    return target

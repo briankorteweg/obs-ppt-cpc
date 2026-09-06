@@ -18,7 +18,9 @@ def _configure_logging(verbose: bool) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Switch OBS scenes from PowerPoint speaker notes.")
+    parser = argparse.ArgumentParser(
+        description="SceneSlider — switch OBS scenes from PowerPoint speaker notes.",
+    )
     parser.add_argument(
         "--switch",
         metavar="SCENE",
