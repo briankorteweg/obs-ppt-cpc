@@ -1,4 +1,4 @@
--- Timing and scene-matching rules for obs-scripts/hide-source-on-scene-change.lua.
+-- Timing rules for obs-scripts/hide-source-on-scene-change.lua.
 -- Run from the repo root: lua5.1 tests/test_hide_source_on_scene_change.lua
 
 local failures = 0
@@ -111,17 +111,6 @@ do
 end
 
 do
-	check("blank scene list matches every scene", scene_hide_allows("", "Cam"))
-	check("whitespace scene list matches every scene", scene_hide_allows("   ", "Cam"))
-	check("nil scene list matches every scene", scene_hide_allows(nil, "Desk"))
-	check("listed scene matches exactly", scene_hide_allows("Cam, BRB", "BRB"))
-	check("listed scene trims spaces", scene_hide_allows(" Cam , BRB ", "Cam"))
-	check("unlisted scene does not match", not scene_hide_allows("Cam, BRB", "Desk"))
-	check("partial names do not match", not scene_hide_allows("Cam", "Camera"))
-	check("newline separated scenes match", scene_hide_allows("Cam\nDesk", "Desk"))
-end
-
-do
 	local watch_state = { seen = false, last = nil }
 	local action, pending = scene_hide_observe(watch_state, "")
 	check("empty scene name is ignored", action == "ignore" and pending == nil)
@@ -136,27 +125,6 @@ do
 	scene_hide_commit(watch_state, "Gameplay")
 	action, pending = scene_hide_observe(watch_state, "Intro")
 	check("returning to a scene triggers again", action == "trigger" and pending == "Intro")
-end
-
-do
-	local state = fresh()
-	state.fade_in_allowed = false
-	scene_hide_begin(state)
-	scene_hide_step(state, 2400)
-	check("hold ends hidden when fade in not allowed", state.phase == "idle" and near(state.opacity, 0))
-end
-
-do
-	check("blank fade-in list allows restore", scene_hide_should_fade_in("", "Singing"))
-	check("fade in only on listed scene", scene_hide_should_fade_in("Pulpit", "Pulpit"))
-	check("no fade in on unlisted scene", not scene_hide_should_fade_in("Pulpit", "Singing"))
-end
-
-do
-	check("blocked when scene not allowed", not scene_hide_should_trigger(true, true, false))
-	check("blocked when source not in scene", not scene_hide_should_trigger(true, false, true))
-	check("runs when allowed and in scene", scene_hide_should_trigger(true, true, true))
-	check("legacy off still runs without in-scene check", scene_hide_should_trigger(false, false, true))
 end
 
 if failures > 0 then
