@@ -123,12 +123,33 @@ end
 
 do
 	local watch_state = { seen = false, last = nil }
-	check("empty scene name is ignored", scene_hide_observe(watch_state, "") == "ignore")
-	check("first scene is remembered", scene_hide_observe(watch_state, "Intro") == "remember")
-	check("same scene does not hide again", scene_hide_observe(watch_state, "Intro") == "ignore")
-	check("a new scene triggers", scene_hide_observe(watch_state, "Gameplay") == "trigger")
-	check("nil name does not replace the last scene", scene_hide_observe(watch_state, nil) == "ignore" and watch_state.last == "Gameplay")
-	check("returning to a scene triggers again", scene_hide_observe(watch_state, "Intro") == "trigger")
+	local action, pending = scene_hide_observe(watch_state, "")
+	check("empty scene name is ignored", action == "ignore" and pending == nil)
+	action, pending = scene_hide_observe(watch_state, "Intro")
+	check("first scene is remembered", action == "remember" and pending == nil)
+	action, pending = scene_hide_observe(watch_state, "Intro")
+	check("same scene does not hide again", action == "ignore" and pending == nil)
+	action, pending = scene_hide_observe(watch_state, "Gameplay")
+	check("a new scene triggers", action == "trigger" and pending == "Gameplay")
+	action, pending = scene_hide_observe(watch_state, nil)
+	check("nil name does not replace the last scene", action == "ignore" and watch_state.last == "Intro")
+	scene_hide_commit(watch_state, "Gameplay")
+	action, pending = scene_hide_observe(watch_state, "Intro")
+	check("returning to a scene triggers again", action == "trigger" and pending == "Intro")
+end
+
+do
+	local state = fresh()
+	state.fade_in_allowed = false
+	scene_hide_begin(state)
+	scene_hide_step(state, 2400)
+	check("hold ends hidden when fade in not allowed", state.phase == "idle" and near(state.opacity, 0))
+end
+
+do
+	check("blank fade-in list allows restore", scene_hide_should_fade_in("", "Singing"))
+	check("fade in only on listed scene", scene_hide_should_fade_in("Pulpit", "Pulpit"))
+	check("no fade in on unlisted scene", not scene_hide_should_fade_in("Pulpit", "Singing"))
 end
 
 do
