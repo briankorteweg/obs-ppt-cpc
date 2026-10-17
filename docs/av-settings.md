@@ -54,7 +54,25 @@ Ashly PEMA 4250 (rear tap — see wiring note) → cable → Behringer UCA202 (l
 
 The **Ashly PEMA 4250** is the room’s powered DSP matrix amplifier (four amp channels, eight inputs). The **Behringer UCA202** is the USB interface OBS sees as the capture device for this feed. Sync offset (+1700 ms) applies to this path in the mixer once it is in OBS.
 
-For streaming, the tap should be a **line-level** output on the PEMA (for example **preamp** or **AUX** post-DSP outputs on the rear), **not** the **speaker** binding posts. The UCA202 expects roughly consumer line level (~−10 dBV); speaker outputs are the wrong impedance and level for that interface.
+For streaming, use a **line-level** rear output on the PEMA — **not** the **speaker** Euroblocks. On our rack unit the stream feed is wired at **AUX OUTPUTS** (“outputs A–D available on four channel amp”), not at the amplifier speaker terminals.
+
+| Rear output | Connector | Use for UCA202 / stream |
+|-------------|-----------|-------------------------|
+| **AUX outputs** (A–D) | 3-pin blue **Euroblock** (+ / − / **G**) | **Current tap** — post-DSP, pseudo-balanced, up to **+20 dBu** |
+| **Preamp outputs** | Euroblock + nearby **RCA** pairs | Alternate line-level tap (same class as AUX) |
+| **Speaker outputs** | Larger Euroblocks | **Do not** feed the UCA202 |
+
+Ashly labels each AUX Euroblock with channel and **G** (ground). See [PEMA manual](https://ashly.com/wp-content/uploads/2026/03/Pema-Manual-r11.pdf) § rear panel (items 7–8: preamp/AUX pseudo-balanced outputs).
+
+The UCA202 expects roughly **consumer line** level (~−10 dBV). AUX can be much hotter (+20 dBu max); use the UCA202 **input gain** switch and Protea faders so the feed does not clip.
+
+### Photos (current wiring at AUX outputs)
+
+![PEMA 4250 rear — AUX OUTPUTS Euroblocks and RCAs](images/pema-aux-outputs-overview.jpg)
+
+![Close-up — signal wires into AUX Euroblock terminals](images/pema-aux-euroblock-wiring.jpg)
+
+![Shield/drain wires stripped and bundled between the two blue cables](images/pema-aux-shield-wires.jpg)
 
 ## Whine on the PEMA 4250 → UCA202 feed (open issue)
 
@@ -66,14 +84,19 @@ A **whine** (high-pitched noise) is audible on the stream when this feed is conn
 | UCA202 with **no cable** plugged in | Interface is **silent** — noise is not coming from the box itself |
 | Cable / PEMA end wiring | **Likely source** — needs a proper look |
 
-**Wiring note (PEMA end):** The run uses **two conductors**. Before they enter the PEMA, the **copper of one is wrapped around the other**, then both go into a rear connection on the PEMA. That is non-standard; document photos or a sketch before changing anything. Confirm whether that jack is **speaker**, **preamp**, or **AUX** (see [PEMA manual](https://ashly.com/wp-content/uploads/2026/03/Pema-Manual-r11.pdf) — preamp/AUX are line-level; speaker posts are not).
+**What the photos show (Feb 2026 site survey):**
 
-**Things to check when investigating** (update this list as you learn more):
+- Two **blue-jacket** cables run from the **AUX OUTPUT** Euroblocks toward the Behringer. Jackets are stripped back; **red** and **white** insulated conductors land in **separate** blue terminal blocks (adjacent AUX channels).
+- **Bare shield/drain** wire from each cable is **not** landed on the **G** terminals. Shields are **twisted together** and left exposed near the blocks (one bundle is a loose ball of copper). That matches the earlier note about one conductor “wrapped around” the other — it is almost certainly **drain/shield mishandling**, not intentional audio wiring.
+- Pseudo-balanced outputs expect **(+)** hot, **(−)** often tied to **G** when driving unbalanced gear, and **shield to G at the PEMA end only** (then a proper pair to the UCA202). Floating or shared shields between two AUX channels are a common cause of **hum, buzz, and whine**.
 
-- Confirm the tap is **line level** (preamp or AUX), not **speaker** output — speaker voltage into the UCA202 line input commonly causes distortion, hum, or whine.
-- **Ground loops**: same power outlet vs isolated ground, short cable run, and whether a **DI box** is appropriate (only if you understand safety — never defeat mains earth recklessly).
-- Replace or re-terminate the cable with a proper **stereo line** or **pseudo-balanced** run per Ashly’s connector type instead of the wrapped-conductor hack.
-- Confirm **input gain** on the UCA202 (rear switch) matches the PEMA output level.
+**Things to check when fixing** (update as the install changes):
+
+- Re-terminate **one** AUX channel (or a proper stereo pair from two AUX outputs) with a short run to the UCA202: **center/signal → (+)**, **shield → (G)**, **(−) → (G)** per Ashly’s unbalanced wiring guidance; do **not** tie shields from two channels together at the Euroblocks.
+- Prefer a single **shielded stereo cable** (or two shielded pairs) from AUX to the UCA202 RCA/adapter, with shields connected only at the source end if ground-loop hum appears.
+- Keep cable short, away from speaker wiring and AC, as Ashly recommends for unbalanced runs.
+- Confirm **input gain** on the UCA202 matches the Protea AUX level (AUX can be up to +20 dBu).
+- If hum remains after clean termination, try a **line isolation transformer** on the unbalanced leg to the UCA202 (manual suggests this for ground-loop hum on unbalanced inputs/outputs).
 
 Until the whine is fixed in hardware, OBS noise suppression may mask it slightly but will not fix the root cause.
 
