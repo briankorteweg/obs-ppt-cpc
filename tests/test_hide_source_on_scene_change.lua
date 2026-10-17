@@ -131,6 +131,13 @@ do
 	check("returning to a scene triggers again", scene_hide_observe(watch_state, "Intro") == "trigger")
 end
 
+do
+	check("blocked when scene not allowed", not scene_hide_should_trigger(true, true, false))
+	check("blocked when source not in scene", not scene_hide_should_trigger(true, false, true))
+	check("runs when allowed and in scene", scene_hide_should_trigger(true, true, true))
+	check("legacy off still runs without in-scene check", scene_hide_should_trigger(false, false, true))
+end
+
 if failures > 0 then
 	io.write(string.format("%d test(s) failed\n", failures))
 	os.exit(1)

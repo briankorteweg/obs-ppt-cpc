@@ -23,6 +23,7 @@ local fade_out_ms = DEFAULT_FADE_OUT_MS
 local fade_in_ms = DEFAULT_FADE_IN_MS
 local scene_filter = ""
 local mute_audio = false
+local require_in_scene = true
 
 local model = nil
 local watch = { seen = false, last = nil }
@@ -204,6 +205,19 @@ function scene_hide_allows(filter_text, scene_name)
 	return false
 end
 
+-- When require_in_scene is true, only run (and fade back in) if the program
+-- scene actually contains the chosen source. Stops the pulse on camera-only
+-- scenes that do not use the presentation source.
+function scene_hide_should_trigger(require_in_scene_flag, source_in_scene, allows_scene)
+	if not allows_scene then
+		return false
+	end
+	if require_in_scene_flag and not source_in_scene then
+		return false
+	end
+	return true
+end
+
 model = scene_hide_new(DEFAULT_OFF_SECONDS * 1000, DEFAULT_FADE_OUT_MS, DEFAULT_FADE_IN_MS)
 
 local function log_info(message)
@@ -344,6 +358,44 @@ local function show_source(source)
 	release_mute(source)
 end
 
+local function scene_source_by_name(scene_name)
+	if scene_name == nil or scene_name == "" then
+		return nil
+	end
+	return obs.obs_get_source_by_name(scene_name)
+end
+
+local function source_present_in_scene(scene_source, wanted_name)
+	if scene_source == nil or wanted_name == nil or wanted_name == "" then
+		return false
+	end
+	local scene = obs.obs_scene_from_source(scene_source)
+	if scene == nil then
+		return false
+	end
+	local item = nil
+	if obs.obs_scene_find_source_recursive ~= nil then
+		item = obs.obs_scene_find_source_recursive(scene, wanted_name)
+	else
+		item = obs.obs_scene_find_source(scene, wanted_name)
+	end
+	return item ~= nil
+end
+
+local function source_in_named_scene(scene_name, wanted_name)
+	local scene_source = scene_source_by_name(scene_name)
+	if scene_source == nil then
+		return false
+	end
+	local present = source_present_in_scene(scene_source, wanted_name)
+	obs.obs_source_release(scene_source)
+	return present
+end
+
+local function source_in_program_scene()
+	return source_in_named_scene(program_scene_name(), source_name)
+end
+
 local function apply_model(source)
 	if model.phase == "idle" then
 		show_source(source)
@@ -351,6 +403,14 @@ local function apply_model(source)
 		push_opacity(source, model.opacity)
 		hold_mute(source)
 	end
+end
+
+local function abort_cycle(name)
+	with_source(name, function(source)
+		show_source(source)
+	end)
+	scene_hide_show(model)
+	pushed_opacity = nil
 end
 
 local function restore_source(name)
@@ -433,9 +493,11 @@ local function react_to_scene(scene_name_now)
 	if not enabled or source_name == nil or source_name == "" then
 		return
 	end
-	if not scene_hide_allows(scene_filter, scene_name_now) then
+	local allows = scene_hide_allows(scene_filter, scene_name_now)
+	local in_scene = source_in_named_scene(scene_name_now, source_name)
+	if not scene_hide_should_trigger(require_in_scene, in_scene, allows) then
 		if model.phase ~= "idle" then
-			restore_source(source_name)
+			abort_cycle(source_name)
 		end
 		return
 	end
@@ -478,6 +540,13 @@ local function advance(seconds)
 	end
 	scene_hide_step(model, (seconds or 0) * 1000)
 	with_source(source_name, function(source)
+		if model.phase == "fade_in" or model.phase == "idle" then
+			if require_in_scene and not source_in_program_scene() then
+				scene_hide_show(model)
+				show_source(source)
+				return
+			end
+		end
 		apply_model(source)
 	end)
 end
@@ -527,7 +596,9 @@ function script_description()
 	return "When the program scene changes, fade out one source, keep it fully hidden, then fade it back in.\n\n"
 		.. "Hidden duration is how long the source stays fully invisible (2 seconds by default). "
 		.. "Fade out and fade in are extra and can be 0 for a hard cut.\n\n"
-		.. "Leave the scene list blank to do this on every scene change, or enter scene names separated by commas. "
+		.. "Leave the scene list blank to allow any program scene change, or enter scene names separated by commas "
+		.. "(best: only scenes that use this source, e.g. your presentation scene). "
+		.. "With \"Only when source is in scene\" enabled, camera-only scenes will not pulse the presentation source. "
 		.. "Preview changes in studio mode are ignored. "
 		.. "Check mute only if this source's audio should go silent while it is hidden.\n\n"
 		.. "A Color Correction filter named \"" .. FILTER_NAME .. "\" is added to the source. "
@@ -590,6 +661,17 @@ function script_properties()
 	)
 	describe(scenes, "Comma-separated scene names. Blank means every program scene change.")
 
+	local in_scene = obs.obs_properties_add_bool(
+		props,
+		"require_in_scene",
+		"Only when source is in scene"
+	)
+	describe(
+		in_scene,
+		"Recommended. Runs the hide/fade cycle only when the new program scene actually contains this source. "
+			.. "Prevents the presentation from flashing on scenes that do not use it."
+	)
+
 	local mute = obs.obs_properties_add_bool(props, "mute_audio", "Mute audio while hidden")
 	describe(mute, "Also silence this source until it has faded back in. A source that was already muted stays muted.")
 
@@ -602,6 +684,7 @@ function script_defaults(settings)
 	obs.obs_data_set_default_int(settings, "fade_out_ms", DEFAULT_FADE_OUT_MS)
 	obs.obs_data_set_default_int(settings, "fade_in_ms", DEFAULT_FADE_IN_MS)
 	obs.obs_data_set_default_string(settings, "scenes", "")
+	obs.obs_data_set_default_bool(settings, "require_in_scene", true)
 	obs.obs_data_set_default_bool(settings, "mute_audio", false)
 end
 
@@ -616,6 +699,10 @@ function script_update(settings)
 	fade_out_ms = obs.obs_data_get_int(settings, "fade_out_ms")
 	fade_in_ms = obs.obs_data_get_int(settings, "fade_in_ms")
 	scene_filter = obs.obs_data_get_string(settings, "scenes") or ""
+	require_in_scene = obs.obs_data_get_bool(settings, "require_in_scene")
+	if obs.obs_data_has_user_value ~= nil and not obs.obs_data_has_user_value(settings, "require_in_scene") then
+		require_in_scene = true
+	end
 	mute_audio = obs.obs_data_get_bool(settings, "mute_audio")
 
 	scene_hide_configure(model, off_seconds * 1000, fade_out_ms, fade_in_ms)
