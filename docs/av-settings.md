@@ -17,9 +17,21 @@ In OBS, the offset is **Sync Offset (ms)** under **Mixer → gear icon → Advan
 
 ## YouTube
 
+Latency mode is a tradeoff between **how fast viewers see the stream** and **which resolutions YouTube will deliver**. Our A/V sync baseline was verified with **Normal** latency.
+
+| Latency mode | Typical viewer delay | Max stream quality (observed / YouTube) |
+|--------------|----------------------|-------------------------------------------|
+| **Normal** | Higher (more buffering for viewers) | **All resolutions**, including 4K; full live feature set |
+| **Low** | Usually under ~10 seconds | **Up to 1440p** — **4K is not supported** in this mode |
+| **Ultra-low** | Usually under ~5 seconds | **1080p and below** (no 1440p / 4K) |
+
+If you need **4K** (2160p) on the live stream, use **Normal** latency. **Low** latency is appropriate when you want faster interaction but can accept a **1440p ceiling** (and no 4K).
+
 1. Open **YouTube Studio** for the live stream.
-2. Set stream latency to **Normal** (not Ultra-low or Low unless you intentionally change platform behavior).
-3. If you change latency mode later, re-check lip sync on a short live segment or replay.
+2. Choose latency under stream settings (we use **Normal** for the verified sync values in this doc).
+3. If you change latency mode or output resolution, re-check lip sync on a short live segment or replay and confirm the quality tier viewers actually get.
+
+Official reference: [YouTube live streaming latency](https://support.google.com/youtube/answer/7444635).
 
 ## OBS — audio delay (match audio to video)
 
@@ -54,7 +66,7 @@ Re-check sync after any of these change:
 - Camera, capture card, or HDMI/USB video path
 - Microphone, audio interface, or wireless mic
 - OBS major upgrade or new audio/video plugins
-- YouTube latency mode
+- YouTube latency mode or max resolution (e.g. moving between Normal and Low changes both delay and whether 4K is available)
 - Heavy load causing skipped or lagged frames (see OBS **Stats**)
 
 Prefer **48 kHz** sample rate consistently across Windows sound devices and OBS when possible. If audio drifts or stays wrong despite offset, review OBS logs/analyzer and source settings (e.g. device timestamps on audio sources).
