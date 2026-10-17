@@ -49,29 +49,31 @@ Tune only the source that should stay locked to the main video. Other mixer chan
 Program audio into the streaming PC follows this chain:
 
 ```text
-PIMA (stereo output, rear) → cable → Behringer UCA202 (line in) → USB → PC → OBS
+Ashly PEMA 4250 (rear tap — see wiring note) → cable → Behringer UCA202 (line in) → USB → PC → OBS
 ```
 
-The **Behringer UCA202** is the USB interface OBS sees as the capture device for this feed. Sync offset (+1700 ms) applies to this path in the mixer once it is in OBS.
+The **Ashly PEMA 4250** is the room’s powered DSP matrix amplifier (four amp channels, eight inputs). The **Behringer UCA202** is the USB interface OBS sees as the capture device for this feed. Sync offset (+1700 ms) applies to this path in the mixer once it is in OBS.
 
-## Whine on the PIMA → UCA202 feed (open issue)
+For streaming, the tap should be a **line-level** output on the PEMA (for example **preamp** or **AUX** post-DSP outputs on the rear), **not** the **speaker** binding posts. The UCA202 expects roughly consumer line level (~−10 dBV); speaker outputs are the wrong impedance and level for that interface.
+
+## Whine on the PEMA 4250 → UCA202 feed (open issue)
 
 A **whine** (high-pitched noise) is audible on the stream when this feed is connected. Isolation so far:
 
 | Observation | Implication |
 |-------------|-------------|
-| Disconnecting the cable **from the Behringer** (PIMA side or interface input) | Whine **stops** |
+| Disconnecting the cable **from the Behringer** (PEMA side or interface input) | Whine **stops** |
 | UCA202 with **no cable** plugged in | Interface is **silent** — noise is not coming from the box itself |
-| Cable / PIMA end wiring | **Likely source** — needs a proper look |
+| Cable / PEMA end wiring | **Likely source** — needs a proper look |
 
-**Wiring note (PIMA end):** The run uses **two conductors**. Before they enter the PIMA, the **copper of one is wrapped around the other**, then both go into the PIMA rear stereo connection. That is non-standard for a typical balanced or simple stereo pair; document photos or a sketch before changing anything, then verify whether the PIMA expects TS, TRS, RCA, or speaker-level taps.
+**Wiring note (PEMA end):** The run uses **two conductors**. Before they enter the PEMA, the **copper of one is wrapped around the other**, then both go into a rear connection on the PEMA. That is non-standard; document photos or a sketch before changing anything. Confirm whether that jack is **speaker**, **preamp**, or **AUX** (see [PEMA manual](https://ashly.com/wp-content/uploads/2026/03/Pema-Manual-r11.pdf) — preamp/AUX are line-level; speaker posts are not).
 
 **Things to check when investigating** (update this list as you learn more):
 
-- Whether the PIMA output is **line level** vs **speaker** output — speaker taps into a line input can cause distortion, hum, or whine.
-- **Ground loops**: try same power outlet vs isolated ground, short cable run, and whether a **ground-lift** or **DI box** is appropriate (only if you understand safety — never lift earth on mains-powered gear recklessly).
-- Replace or re-terminate the cable with a proper **stereo pair** (or balanced run if the PIMA supports it) instead of the wrapped-conductor hack.
-- Confirm **input gain** on the UCA202 (rear switch) matches the PIMA output level.
+- Confirm the tap is **line level** (preamp or AUX), not **speaker** output — speaker voltage into the UCA202 line input commonly causes distortion, hum, or whine.
+- **Ground loops**: same power outlet vs isolated ground, short cable run, and whether a **DI box** is appropriate (only if you understand safety — never defeat mains earth recklessly).
+- Replace or re-terminate the cable with a proper **stereo line** or **pseudo-balanced** run per Ashly’s connector type instead of the wrapped-conductor hack.
+- Confirm **input gain** on the UCA202 (rear switch) matches the PEMA output level.
 
 Until the whine is fixed in hardware, OBS noise suppression may mask it slightly but will not fix the root cause.
 
@@ -95,7 +97,7 @@ A single Render Delay filter is limited (often 500 ms in OBS). Larger video dela
 Re-check sync after any of these change:
 
 - Camera, capture card, or HDMI/USB video path
-- Microphone, audio interface, wireless mic, or **PIMA → UCA202** wiring
+- Microphone, audio interface, wireless mic, or **PEMA 4250 → UCA202** wiring
 - OBS major upgrade or new audio/video plugins
 - YouTube latency mode or max resolution (e.g. moving between Normal and Low changes both delay and whether 4K is available)
 - Heavy load causing skipped or lagged frames (see OBS **Stats**)
@@ -105,4 +107,4 @@ Prefer **48 kHz** sample rate consistently across Windows sound devices and OBS 
 ## Maintenance
 
 - Update the **Verified baseline** table whenever you change latency mode or sync offset after a successful test on YouTube.
-- Update **Whine on the PIMA → UCA202 feed** when the cable, PIMA output type, or interface path changes.
+- Update **Whine on the PEMA 4250 → UCA202 feed** when the cable, PEMA output type, or interface path changes.
