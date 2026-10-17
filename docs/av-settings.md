@@ -44,6 +44,37 @@ Use this when **video is behind** the audio viewers hear (mouth moves before the
 
 Tune only the source that should stay locked to the main video. Other mixer channels (e.g. desktop audio) usually stay at **0** unless they have their own delay path.
 
+## Physical audio path (PC capture)
+
+Program audio into the streaming PC follows this chain:
+
+```text
+PIMA (stereo output, rear) → cable → Behringer UCA202 (line in) → USB → PC → OBS
+```
+
+The **Behringer UCA202** is the USB interface OBS sees as the capture device for this feed. Sync offset (+1700 ms) applies to this path in the mixer once it is in OBS.
+
+## Whine on the PIMA → UCA202 feed (open issue)
+
+A **whine** (high-pitched noise) is audible on the stream when this feed is connected. Isolation so far:
+
+| Observation | Implication |
+|-------------|-------------|
+| Disconnecting the cable **from the Behringer** (PIMA side or interface input) | Whine **stops** |
+| UCA202 with **no cable** plugged in | Interface is **silent** — noise is not coming from the box itself |
+| Cable / PIMA end wiring | **Likely source** — needs a proper look |
+
+**Wiring note (PIMA end):** The run uses **two conductors**. Before they enter the PIMA, the **copper of one is wrapped around the other**, then both go into the PIMA rear stereo connection. That is non-standard for a typical balanced or simple stereo pair; document photos or a sketch before changing anything, then verify whether the PIMA expects TS, TRS, RCA, or speaker-level taps.
+
+**Things to check when investigating** (update this list as you learn more):
+
+- Whether the PIMA output is **line level** vs **speaker** output — speaker taps into a line input can cause distortion, hum, or whine.
+- **Ground loops**: try same power outlet vs isolated ground, short cable run, and whether a **ground-lift** or **DI box** is appropriate (only if you understand safety — never lift earth on mains-powered gear recklessly).
+- Replace or re-terminate the cable with a proper **stereo pair** (or balanced run if the PIMA supports it) instead of the wrapped-conductor hack.
+- Confirm **input gain** on the UCA202 (rear switch) matches the PIMA output level.
+
+Until the whine is fixed in hardware, OBS noise suppression may mask it slightly but will not fix the root cause.
+
 ## OBS — video delay (reference)
 
 If delaying audio is not appropriate for a source, you can delay **video** instead:
@@ -64,7 +95,7 @@ A single Render Delay filter is limited (often 500 ms in OBS). Larger video dela
 Re-check sync after any of these change:
 
 - Camera, capture card, or HDMI/USB video path
-- Microphone, audio interface, or wireless mic
+- Microphone, audio interface, wireless mic, or **PIMA → UCA202** wiring
 - OBS major upgrade or new audio/video plugins
 - YouTube latency mode or max resolution (e.g. moving between Normal and Low changes both delay and whether 4K is available)
 - Heavy load causing skipped or lagged frames (see OBS **Stats**)
@@ -73,4 +104,5 @@ Prefer **48 kHz** sample rate consistently across Windows sound devices and OBS 
 
 ## Maintenance
 
-Update the **Verified baseline** table in this file whenever you change latency mode or sync offset after a successful test on YouTube.
+- Update the **Verified baseline** table whenever you change latency mode or sync offset after a successful test on YouTube.
+- Update **Whine on the PIMA → UCA202 feed** when the cable, PIMA output type, or interface path changes.
